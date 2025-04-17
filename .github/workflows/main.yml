@@ -1,4 +1,4 @@
-name: Cross-Platform Build
+name: Cross-Platform CI/CD
 
 on:
   workflow_dispatch:
@@ -34,9 +34,12 @@ on:
 
   push:
     branches:
-      - dev
+      - linux
 
-# --- Manual trigger path ---
+  release:
+    types: [published]
+
+# --- Manual trigger jobs ---
 jobs:
   select-os:
     if: ${{ github.event_name == 'workflow_dispatch' }}
@@ -59,20 +62,18 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
       - name: Simulate Linux Build
         run: |
           echo "🏗️ Building on Linux"
           echo "Build type: ${{ needs.select-os.outputs.build_type }}"
-          sleep 2
-          echo "✅ Build completed"
-
+          sleep 1
+          echo "✅ Linux build complete"
       - name: Run Linux Tests (if enabled)
         if: ${{ needs.select-os.outputs.run_tests == 'true' }}
         run: |
-          echo "🧪 Running Linux tests..."
+          echo "🧪 Running tests on Linux..."
           sleep 1
-          echo "✅ Tests passed"
+          echo "✅ Linux tests passed"
 
   manual-windows:
     if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'windows' || needs.select-os.outputs.os == 'all') }}
@@ -81,20 +82,18 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
       - name: Simulate Windows Build
         run: |
           echo "🏗️ Building on Windows"
           echo "Build type: ${{ needs.select-os.outputs.build_type }}"
-          timeout /T 2
-          echo "✅ Build completed"
-
+          timeout /T 1
+          echo "✅ Windows build complete"
       - name: Run Windows Tests (if enabled)
         if: ${{ needs.select-os.outputs.run_tests == 'true' }}
         run: |
-          echo "🧪 Running Windows tests..."
+          echo "🧪 Running tests on Windows..."
           timeout /T 1
-          echo "✅ Tests passed"
+          echo "✅ Windows tests passed"
 
   manual-macos:
     if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'macos' || needs.select-os.outputs.os == 'all') }}
@@ -103,57 +102,44 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-
       - name: Simulate macOS Build
         run: |
           echo "🏗️ Building on macOS"
           echo "Build type: ${{ needs.select-os.outputs.build_type }}"
-          sleep 2
-          echo "✅ Build completed"
-
+          sleep 1
+          echo "✅ macOS build complete"
       - name: Run macOS Tests (if enabled)
         if: ${{ needs.select-os.outputs.run_tests == 'true' }}
         run: |
-          echo "🧪 Running macOS tests..."
+          echo "🧪 Running tests on macOS..."
           sleep 1
-          echo "✅ Tests passed"
+          echo "✅ macOS tests passed"
 
-# --- Push to dev branch ---
+# --- Push to 'linux' branch job ---
   push-linux:
-    if: ${{ github.event_name == 'push' }}
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/linux' }}
     runs-on: ubuntu-latest
     steps:
+      - name: Debug Info
+        run: |
+          echo "📦 Push triggered"
+          echo "Branch: ${{ github.ref }}"
+          echo "Event: ${{ github.event_name }}"
       - name: Checkout Code
         uses: actions/checkout@v4
-
       - name: Simulate Push Build - Linux
         run: |
-          echo "🚀 Push Build on Linux (dev branch)"
+          echo "🚀 Push Build on Linux branch"
           sleep 2
-          echo "✅ Push Build done"
+          echo "✅ Push build complete"
 
-  push-windows:
-    if: ${{ github.event_name == 'push' }}
-    runs-on: windows-latest
+# --- Release Published Job ---
+  release-job:
+    if: ${{ github.event_name == 'release' }}
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Simulate Push Build - Windows
+      - name: Show Release Info
         run: |
-          echo "🚀 Push Build on Windows (dev branch)"
-          timeout /T 2
-          echo "✅ Push Build done"
-
-  push-macos:
-    if: ${{ github.event_name == 'push' }}
-    runs-on: macos-latest
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Simulate Push Build - macOS
-        run: |
-          echo "🚀 Push Build on macOS (dev branch)"
-          sleep 2
-          echo "✅ Push Build done"
+          echo "🎉 Release published!"
+          echo "Release Tag: ${{ github.event.release.tag_name }}"
+          echo "Release Name: ${{ github.event.release.name }}"
