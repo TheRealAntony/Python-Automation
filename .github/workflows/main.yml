@@ -14,63 +14,104 @@ on:
           - macos
           - all
 
+      build_type:
+        description: 'Build type'
+        required: true
+        default: 'debug'
+        type: choice
+        options:
+          - debug
+          - release
+
+      run_tests:
+        description: 'Run tests?'
+        required: true
+        default: 'false'
+        type: choice
+        options:
+          - true
+          - false
+
   push:
     branches:
       - dev
 
-# ----------- MANUAL TRIGGER PATH ------------
+# --- Manual Only ---
 jobs:
   select-os:
     if: ${{ github.event_name == 'workflow_dispatch' }}
     runs-on: ubuntu-latest
     outputs:
-      selected_os: ${{ steps.set.outputs.selected_os }}
+      selected_os: ${{ steps.set.outputs.os }}
+      build_type: ${{ steps.set.outputs.build_type }}
+      run_tests: ${{ steps.set.outputs.run_tests }}
     steps:
       - id: set
-        run: echo "selected_os=${{ github.event.inputs.os }}" >> $GITHUB_OUTPUT
+        run: |
+          echo "os=${{ github.event.inputs.os }}" >> $GITHUB_OUTPUT
+          echo "build_type=${{ github.event.inputs.build_type }}" >> $GITHUB_OUTPUT
+          echo "run_tests=${{ github.event.inputs.run_tests }}" >> $GITHUB_OUTPUT
 
   manual-linux:
-    if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.selected_os == 'linux' || needs.select-os.outputs.selected_os == 'all') }}
+    if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'linux' || needs.select-os.outputs.os == 'all') }}
     needs: [select-os]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: echo "🔧 Manual Build on Linux"
+      - run: |
+          echo "🏗️ Building on Linux with ${{ needs.select-os.outputs.build_type }}"
+          if [[ "${{ needs.select-os.outputs.run_tests }}" == "true" ]]; then
+            echo "✅ Running tests on Linux"
+          else
+            echo "❌ Skipping tests on Linux"
+          fi
 
   manual-windows:
-    if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.selected_os == 'windows' || needs.select-os.outputs.selected_os == 'all') }}
+    if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'windows' || needs.select-os.outputs.os == 'all') }}
     needs: [select-os]
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - run: echo "🔧 Manual Build on Windows"
+      - run: |
+          echo "🏗️ Building on Windows with ${{ needs.select-os.outputs.build_type }}"
+          if "${{ needs.select-os.outputs.run_tests }}" == "true"; then
+            echo "✅ Running tests on Windows"
+          else
+            echo "❌ Skipping tests on Windows"
+          fi
 
   manual-macos:
-    if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.selected_os == 'macos' || needs.select-os.outputs.selected_os == 'all') }}
+    if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'macos' || needs.select-os.outputs.os == 'all') }}
     needs: [select-os]
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - run: echo "🔧 Manual Build on macOS"
+      - run: |
+          echo "🏗️ Building on macOS with ${{ needs.select-os.outputs.build_type }}"
+          if [[ "${{ needs.select-os.outputs.run_tests }}" == "true" ]]; then
+            echo "✅ Running tests on macOS"
+          else
+            echo "❌ Skipping tests on macOS"
+          fi
 
-# ----------- PUSH TO DEV PATH ------------
+# --- Push to Dev ---
   push-linux:
     if: ${{ github.event_name == 'push' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: echo "🚀 Push Build on Linux"
+      - run: echo "🚀 Push Build on Linux (dev branch)"
 
   push-windows:
     if: ${{ github.event_name == 'push' }}
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - run: echo "🚀 Push Build on Windows"
+      - run: echo "🚀 Push Build on Windows (dev branch)"
 
   push-macos:
     if: ${{ github.event_name == 'push' }}
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - run: echo "🚀 Push Build on macOS"
+      - run: echo "🚀 Push Build on macOS (dev branch)"
