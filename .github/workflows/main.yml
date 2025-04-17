@@ -14,24 +14,6 @@ on:
           - macos
           - all
 
-      build_type:
-        description: 'Build type'
-        required: true
-        default: 'debug'
-        type: choice
-        options:
-          - debug
-          - release
-
-      run_tests:
-        description: 'Run tests?'
-        required: true
-        default: 'false'
-        type: choice
-        options:
-          - true
-          - false
-
       push_to_s3:
         description: 'Push to S3?'
         required: true
@@ -48,19 +30,13 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       os: ${{ steps.set.outputs.os }}
-      build_type: ${{ steps.set.outputs.build_type }}
-      run_tests: ${{ steps.set.outputs.run_tests }}
       push_to_s3: ${{ steps.set.outputs.push_to_s3 }}
     steps:
       - id: set
         run: |
           echo "os=${{ github.event.inputs.os }}" >> $GITHUB_OUTPUT
-          echo "build_type=${{ github.event.inputs.build_type }}" >> $GITHUB_OUTPUT
-          echo "run_tests=${{ github.event.inputs.run_tests }}" >> $GITHUB_OUTPUT
           echo "push_to_s3=${{ github.event.inputs.push_to_s3 }}" >> $GITHUB_OUTPUT
           echo "Selected OS: ${{ github.event.inputs.os }}"
-          echo "Build type: ${{ github.event.inputs.build_type }}"
-          echo "Run tests: ${{ github.event.inputs.run_tests }}"
           echo "Push to S3: ${{ github.event.inputs.push_to_s3 }}"
           echo "Inputs set successfully."
 
@@ -74,15 +50,8 @@ jobs:
       - name: Simulate Linux Build
         run: |
           echo "🏗️ Building on Linux"
-          echo "Build type: ${{ needs.select-os.outputs.build_type }}"
           sleep 1
           echo "✅ Linux build complete"
-      - name: Run Linux Tests (if enabled)
-        if: ${{ needs.select-os.outputs.run_tests == 'true' }}
-        run: |
-          echo "🧪 Running tests on Linux..."
-          sleep 1
-          echo "✅ Linux tests passed"
 
   manual-windows:
     if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'windows' || needs.select-os.outputs.os == 'all') }}
@@ -94,15 +63,8 @@ jobs:
       - name: Simulate Windows Build
         run: |
           echo "🏗️ Building on Windows"
-          echo "Build type: ${{ needs.select-os.outputs.build_type }}"
           timeout /T 1
           echo "✅ Windows build complete"
-      - name: Run Windows Tests (if enabled)
-        if: ${{ needs.select-os.outputs.run_tests == 'true' }}
-        run: |
-          echo "🧪 Running tests on Windows..."
-          timeout /T 1
-          echo "✅ Windows tests passed"
 
   manual-macos:
     if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'macos' || needs.select-os.outputs.os == 'all') }}
@@ -114,15 +76,8 @@ jobs:
       - name: Simulate macOS Build
         run: |
           echo "🏗️ Building on macOS"
-          echo "Build type: ${{ needs.select-os.outputs.build_type }}"
           sleep 1
           echo "✅ macOS build complete"
-      - name: Run macOS Tests (if enabled)
-        if: ${{ needs.select-os.outputs.run_tests == 'true' }}
-        run: |
-          echo "🧪 Running tests on macOS..."
-          sleep 1
-          echo "✅ macOS tests passed"
 
 # --- Push to 'linux' branch job ---
   push-s3-linux:
@@ -137,12 +92,7 @@ jobs:
           echo "📦 Pushing to S3..."
           sleep 1
           echo "✅ Pushed to S3 successfully"
-      - name: Notify Push (if enabled)
-        if: ${{ needs.select-os.outputs.push_to_s3 == 'true' }}
-        run: |
-          echo "📦 Notifying push..."
-          sleep 1
-          echo "✅ Push notification sent"
+
   push-s3-windows:
     if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'windows' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.push_to_s3 == 'true' }}
     needs: [select-os]
@@ -155,12 +105,7 @@ jobs:
           echo "📦 Pushing to S3..."
           timeout /T 1
           echo "✅ Pushed to S3 successfully"
-      - name: Notify Push (if enabled)
-        if: ${{ needs.select-os.outputs.push_to_s3 == 'true' }}
-        run: |
-          echo "📦 Notifying push..."
-          timeout /T 1
-          echo "✅ Push notification sent"
+
   push-s3-mac:
     if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'macos' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.push_to_s3 == 'true' }}
     needs: [select-os]
@@ -173,57 +118,3 @@ jobs:
           echo "📦 Pushing to S3..."
           sleep 1
           echo "✅ Pushed to S3 successfully"
-      - name: Notify Push (if enabled)
-        if: ${{ needs.select-os.outputs.push_to_s3 == 'true' }}
-        run: |
-          echo "📦 Notifying push..."
-          sleep 1
-          echo "✅ Push notification sent"        
-    
-# --- Release Published Job ---
-  release-linux:
-    if: ${{ github.event_name == 'release' }}
-    needs: [select-os]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Debug Info
-        run: |
-          echo "📦 Release triggered"
-          echo "Branch: ${{ github.ref }}"
-          echo "Event: ${{ github.event_name }}"
-      - name: Checkout Code
-        uses: actions/checkout@v4
-      - name: Simulate Release Build - Linux
-        run: |
-          echo "🚀 Release Build on Linux branch"
-          sleep 2
-          echo "✅ Release build complete"
-      - name: Notify Release (if enabled)
-        if: ${{ needs.select-os.outputs.push_to_s3 == 'true' }}
-        run: |
-          echo "📦 Notifying release..."
-          sleep 1
-          echo "✅ Release notification sent"
-  release-windows:
-    if: ${{ github.event_name == 'release' }}
-    needs: [select-os]
-    runs-on: windows-latest
-    steps:
-      - name: Debug Info
-        run: |
-          echo "📦 Release triggered"
-          echo "Branch: ${{ github.ref }}"
-          echo "Event: ${{ github.event_name }}"
-      - name: Checkout Code
-        uses: actions/checkout@v4
-      - name: Simulate Release Build - Windows
-        run: |
-          echo "🚀 Release Build on Windows branch"
-          timeout /T 2
-          echo "✅ Release build complete"
-      - name: Notify Release (if enabled)
-        if: ${{ needs.select-os.outputs.push_to_s3 == 'true' }}
-        run: |
-          echo "📦 Notifying release..."
-          timeout /T 1
-          echo "✅ Release notification sent"          
