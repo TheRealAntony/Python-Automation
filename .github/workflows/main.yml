@@ -54,7 +54,7 @@ jobs:
 
   manual-linux:
     if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'linux' || needs.select-os.outputs.os == 'all') }}
-    needs: [select-os, manual-linux]
+    needs: [select-os]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -69,6 +69,7 @@ jobs:
 
   manual-windows:
     if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'windows' || needs.select-os.outputs.os == 'all') }}
+    needs: [select-os]
     runs-on: windows-latest
     outputs:
       build_complete: ${{ steps.build.outputs.build_complete }}
@@ -85,7 +86,7 @@ jobs:
 # --- Push to 'linux' branch job ---
   push-s3-linux:
     if: ${{ github.event_name == 'workflow_dispatch' && needs.manual-linux.outputs.build_complete == 'true' && (needs.select-os.outputs.os == 'linux' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.push_to_s3 == 'true' }}
-    needs: [select-os, manual-linux]
+    needs: [select-os]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
