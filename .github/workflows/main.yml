@@ -1,0 +1,76 @@
+name: Cross-Platform Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      os:
+        description: 'Select OS to build on'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - linux
+          - windows
+          - macos
+          - all
+
+  push:
+    branches:
+      - dev
+
+# ----------- MANUAL TRIGGER PATH ------------
+jobs:
+  select-os:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    outputs:
+      selected_os: ${{ steps.set.outputs.selected_os }}
+    steps:
+      - id: set
+        run: echo "selected_os=${{ github.event.inputs.os }}" >> $GITHUB_OUTPUT
+
+  manual-linux:
+    if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.selected_os == 'linux' || needs.select-os.outputs.selected_os == 'all') }}
+    needs: [select-os]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "🔧 Manual Build on Linux"
+
+  manual-windows:
+    if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.selected_os == 'windows' || needs.select-os.outputs.selected_os == 'all') }}
+    needs: [select-os]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "🔧 Manual Build on Windows"
+
+  manual-macos:
+    if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.selected_os == 'macos' || needs.select-os.outputs.selected_os == 'all') }}
+    needs: [select-os]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "🔧 Manual Build on macOS"
+
+# ----------- PUSH TO DEV PATH ------------
+  push-linux:
+    if: ${{ github.event_name == 'push' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "🚀 Push Build on Linux"
+
+  push-windows:
+    if: ${{ github.event_name == 'push' }}
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "🚀 Push Build on Windows"
+
+  push-macos:
+    if: ${{ github.event_name == 'push' }}
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: echo "🚀 Push Build on macOS"
