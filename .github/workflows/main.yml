@@ -48,6 +48,8 @@ jobs:
           echo "push_to_s3=${{ github.event.inputs.push_to_s3 }}" >> $GITHUB_OUTPUT
           echo "Selected OS: ${{ github.event.inputs.os }}"
           echo "Push to S3: ${{ github.event.inputs.push_to_s3 }}"
+          echo "deploy=${{ github.event.inputs.deploy }}" >> $GITHUB_OUTPUT
+          echo "Deploy: ${{ github.event.inputs.deploy }}"
           echo "Inputs set successfully."
 
   manual-linux:
