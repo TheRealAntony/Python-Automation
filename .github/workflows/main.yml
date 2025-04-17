@@ -83,6 +83,22 @@ jobs:
           echo "build_complete=true" >> $GITHUB_OUTPUT
           echo "✅ Windows build complete"
 
+  manual-macos:
+    if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'macos' || needs.select-os.outputs.os == 'all') }}
+    needs: [select-os]
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Simulate macOS Build
+        id: build
+        run: |
+          echo "🏗️ Building on macOS"
+          sleep 1
+          echo "✅ macOS build complete"
+      - run: echo "build_complete=true" >> $GITHUB_OUTPUT
+          
+
 # --- Push to 'linux' branch job ---
   push-s3-linux:
     if: ${{ github.event_name == 'workflow_dispatch' && needs.manual-linux.outputs.build_complete == 'true' && (needs.select-os.outputs.os == 'linux' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.push_to_s3 == 'true' }}
