@@ -1,3 +1,5 @@
+name: Cross-Platform CI/CD
+
 on:
   workflow_dispatch:
     inputs:
@@ -28,10 +30,7 @@ on:
         type: choice
         options:
           - true
-          - false
-  pull_request:
-    branches:
-      - master           
+          - false     
 
 # --- build trigger jobs ---
 jobs:
@@ -146,8 +145,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-      - name: Request Approval
-        uses: hmarr/auto-approve-action@v2
       - name: Simulate Deploy to Production - Linux
         run: |
           echo "🚀 Deploying to production..."
