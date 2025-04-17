@@ -31,7 +31,7 @@ on:
         options:
           - true
           - false
-          
+
       push_to_s3:
         description: 'Push to S3?'
         required: true
@@ -126,7 +126,7 @@ jobs:
 
 # --- Push to 'linux' branch job ---
   push-s3-linux:
-    if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'linux' || needs.select-os.outputs.os == 'all' needs.select-os.outputs.push_to_s3 == 'true') }}
+    if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'linux' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.push_to_s3 == 'true' }}
     needs: [select-os]
     runs-on: ubuntu-latest
     steps:
@@ -144,7 +144,7 @@ jobs:
           sleep 1
           echo "✅ Push notification sent"
   push-s3-windows:
-    if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'windows' || needs.select-os.outputs.os == 'all' || needs.select-os.outputs.push_to_s3 == 'true') }}
+    if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'windows' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.push_to_s3 == 'true' }}
     needs: [select-os]
     runs-on: windows-latest
     steps:
@@ -162,7 +162,7 @@ jobs:
           timeout /T 1
           echo "✅ Push notification sent"
   push-s3-mac:
-    if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'macos' || needs.select-os.outputs.os == 'all' || needs.select-os.outputs.push_to_s3 == 'true') }}
+    if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'macos' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.push_to_s3 == 'true' }}
     needs: [select-os]
     runs-on: macos-latest
     steps:
