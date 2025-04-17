@@ -69,6 +69,9 @@ jobs:
 
   manual-windows:
     if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'windows' || needs.select-os.outputs.os == 'all') }}
+    runs-on: windows-latest
+    outputs:
+      build_complete: ${{ steps.build.outputs.build_complete }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -76,30 +79,13 @@ jobs:
         id: build
         run: |
           echo "🏗️ Building on Windows"
+          echo "build_complete=true" >> $GITHUB_OUTPUT
           echo "✅ Windows build complete"
-      - run: echo "build_complete=true" >> $GITHUB_OUTPUT
-          echo "🏗️ Building on Windows"
-          echo "✅ Windows build complete"
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-      - name: Simulate macOS Build
-        id: build
-        run: |
-          echo "🏗️ Building on macOS"
-          sleep 1
-          echo "✅ macOS build complete"
-      - run: echo "build_complete=true" >> $GITHUB_OUTPUT
-        run: |
-          echo "🏗️ Building on macOS"
-          sleep 1
-          echo "✅ macOS build complete"
 
 # --- Push to 'linux' branch job ---
   push-s3-linux:
-    if: ${{ github.event_name == 'workflow_dispatch' && needs.manual-linux.outputs.build_complete && (needs.select-os.outputs.os == 'linux' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.push_to_s3 == 'true' }}
-    needs: [select-os]
+    if: ${{ github.event_name == 'workflow_dispatch' && needs.manual-linux.outputs.build_complete == 'true' && (needs.select-os.outputs.os == 'linux' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.push_to_s3 == 'true' }}
+    needs: [select-os, manual-linux]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -111,7 +97,7 @@ jobs:
           echo "✅ Pushed to S3 successfully"
 
   push-s3-windows:
-    if: ${{ github.event_name == 'workflow_dispatch' && needs.manual-windows.outputs.build_complete && (needs.select-os.outputs.os == 'windows' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.push_to_s3 == 'true' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && needs.manual-windows.outputs.build_complete == 'true' && (needs.select-os.outputs.os == 'windows' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.push_to_s3 == 'true' }}
     needs: [select-os]
     runs-on: windows-latest
     steps:
@@ -123,7 +109,7 @@ jobs:
           echo "✅ Pushed to S3 successfully"
 
   push-s3-mac:
-    if: ${{ github.event_name == 'workflow_dispatch' && needs.manual-macos.outputs.build_complete && (needs.select-os.outputs.os == 'macos' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.push_to_s3 == 'true' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && needs.manual-macos.outputs.build_complete == 'true' && (needs.select-os.outputs.os == 'macos' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.push_to_s3 == 'true' }}
     needs: [select-os]
     runs-on: macos-latest
     steps:
@@ -136,7 +122,7 @@ jobs:
           echo "✅ Pushed to S3 successfully"
 
   deploy_to_linux:
-    if: ${{ github.event_name == 'workflow_dispatch' && needs.manual-linux.outputs.build_complete && needs.push-s3-linux.outputs.build_complete && (needs.select-os.outputs.os == 'linux' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.deploy == 'true' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && needs.manual-linux.outputs.build_complete == 'true' && needs.push-s3-linux.outputs.build_complete == 'true' && (needs.select-os.outputs.os == 'linux' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.deploy == 'true' }}
     needs: [select-os]
     runs-on: ubuntu-latest
     steps:
@@ -149,7 +135,7 @@ jobs:
           echo "✅ Deployed to production successfully"
 
   deploy_to_windows:
-    if: ${{ github.event_name == 'workflow_dispatch' && needs.manual-windows.outputs.build_complete && needs.push-s3-windows.outputs.build_complete && (needs.select-os.outputs.os == 'windows' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.deploy == 'true' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && needs.manual-windows.outputs.build_complete == 'true' && needs.push-s3-windows.outputs.build_complete == 'true' && (needs.select-os.outputs.os == 'windows' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.deploy == 'true' }}
     needs: [select-os]
     runs-on: windows-latest
     steps:
@@ -161,7 +147,7 @@ jobs:
           echo "✅ Deployed to production successfully"
 
   deploy_to_mac:
-    if: ${{ github.event_name == 'workflow_dispatch' && needs.manual-macos.outputs.build_complete && needs.push-s3-macos.outputs.build_complete && (needs.select-os.outputs.os == 'macos' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.deploy == 'true' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && needs.manual-macos.outputs.build_complete == 'true' && needs.push-s3-macos.outputs.build_complete == 'true' && (needs.select-os.outputs.os == 'macos' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.deploy == 'true' }}
     needs: [select-os]
     runs-on: macos-latest
     steps:
