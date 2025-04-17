@@ -21,7 +21,16 @@ on:
         type: choice
         options:
           - true
-          - false    
+          - false
+
+      deploy:
+        description: 'Deploy to production?'
+        required: true
+        default: 'false'
+        type: choice
+        options:
+          - true
+          - false     
 
 # --- Manual trigger jobs ---
 jobs:
@@ -102,7 +111,6 @@ jobs:
       - name: Simulate Push to S3 - Windows
         run: |
           echo "📦 Pushing to S3..."
-          timeout /T 1
           echo "✅ Pushed to S3 successfully"
 
   push-s3-mac:
@@ -117,3 +125,41 @@ jobs:
           echo "📦 Pushing to S3..."
           sleep 1
           echo "✅ Pushed to S3 successfully"
+
+  deploy_to_linux:
+    if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'linux' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.deploy == 'true' }}
+    needs: [select-os]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Simulate Deploy to Production - Linux
+        run: |
+          echo "🚀 Deploying to production..."
+          sleep 1
+          echo "✅ Deployed to production successfully"
+
+  deploy_to_windows:
+    if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'windows' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.deploy == 'true' }}
+    needs: [select-os]
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Simulate Deploy to Production - Windows
+        run: |
+          echo "🚀 Deploying to production..."
+          echo "✅ Deployed to production successfully"
+
+  deploy_to_mac:
+    if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'macos' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.deploy == 'true' }}
+    needs: [select-os]
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Simulate Deploy to Production - macOS
+        run: |
+          echo "🚀 Deploying to production..."
+          sleep 1
+          echo "✅ Deployed to production successfully"                
