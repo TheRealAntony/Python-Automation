@@ -145,10 +145,6 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-      - name: Manual Approval Required
-        uses: hmarr/auto-approve-action@v2
-        with:
-          pull-request-number: ${{ github.event.pull_request.number }}
       - name: Simulate Deploy to Production - Linux
         run: |
           echo "🚀 Deploying to production..."
