@@ -54,37 +54,43 @@ jobs:
 
   manual-linux:
     if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'linux' || needs.select-os.outputs.os == 'all') }}
-    needs: [select-os]
+    needs: [select-os, manual-linux]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
       - name: Simulate Linux Build
+        id: build
         run: |
           echo "🏗️ Building on Linux"
           sleep 1
           echo "✅ Linux build complete"
+      - run: echo "build_complete=true" >> $GITHUB_OUTPUT
 
   manual-windows:
     if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'windows' || needs.select-os.outputs.os == 'all') }}
-    needs: [select-os]
-    runs-on: windows-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
       - name: Simulate Windows Build
+        id: build
         run: |
           echo "🏗️ Building on Windows"
           echo "✅ Windows build complete"
+      - run: echo "build_complete=true" >> $GITHUB_OUTPUT
+          echo "🏗️ Building on Windows"
+          echo "✅ Windows build complete"
 
-  manual-macos:
-    if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'macos' || needs.select-os.outputs.os == 'all') }}
-    needs: [select-os]
-    runs-on: macos-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
       - name: Simulate macOS Build
+        id: build
+        run: |
+          echo "🏗️ Building on macOS"
+          sleep 1
+          echo "✅ macOS build complete"
+      - run: echo "build_complete=true" >> $GITHUB_OUTPUT
         run: |
           echo "🏗️ Building on macOS"
           sleep 1
