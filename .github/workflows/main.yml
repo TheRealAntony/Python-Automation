@@ -101,8 +101,8 @@ jobs:
 
 # --- Push to 'linux' branch job ---
   push-s3-linux:
-    if: ${{ github.event_name == 'workflow_dispatch' && needs.manual-linux.outputs.build_complete == 'true' && (needs.select-os.outputs.os == 'linux' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.push_to_s3 == 'true' }}
-    needs: [select-os]
+    if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'linux' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.push_to_s3 == 'true' }}
+    needs: [select-os, manual-linux]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -114,8 +114,8 @@ jobs:
           echo "✅ Pushed to S3 successfully"
 
   push-s3-windows:
-    if: ${{ github.event_name == 'workflow_dispatch' && needs.manual-windows.outputs.build_complete == 'true' && (needs.select-os.outputs.os == 'windows' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.push_to_s3 == 'true' }}
-    needs: [select-os]
+    if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'windows' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.push_to_s3 == 'true' }}
+    needs: [select-os, manual-windows]
     runs-on: windows-latest
     steps:
       - name: Checkout Code
@@ -126,8 +126,8 @@ jobs:
           echo "✅ Pushed to S3 successfully"
 
   push-s3-mac:
-    if: ${{ github.event_name == 'workflow_dispatch' && needs.manual-macos.outputs.build_complete == 'true' && (needs.select-os.outputs.os == 'macos' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.push_to_s3 == 'true' }}
-    needs: [select-os]
+    if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'macos' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.push_to_s3 == 'true' }}
+    needs: [select-os, manual-macos]
     runs-on: macos-latest
     steps:
       - name: Checkout Code
@@ -139,8 +139,8 @@ jobs:
           echo "✅ Pushed to S3 successfully"
 
   deploy_to_linux:
-    if: ${{ github.event_name == 'workflow_dispatch' && needs.manual-linux.outputs.build_complete == 'true' && needs.push-s3-linux.outputs.build_complete == 'true' && (needs.select-os.outputs.os == 'linux' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.deploy == 'true' }}
-    needs: [select-os]
+    if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'linux' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.deploy == 'true' }}
+    needs: [select-os, manual-linux, push-s3-linux]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -152,8 +152,8 @@ jobs:
           echo "✅ Deployed to production successfully"
 
   deploy_to_windows:
-    if: ${{ github.event_name == 'workflow_dispatch' && needs.manual-windows.outputs.build_complete == 'true' && needs.push-s3-windows.outputs.build_complete == 'true' && (needs.select-os.outputs.os == 'windows' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.deploy == 'true' }}
-    needs: [select-os]
+    if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'windows' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.deploy == 'true' }}
+    needs: [select-os, manual-windows, push-s3-windows]
     runs-on: windows-latest
     steps:
       - name: Checkout Code
@@ -164,8 +164,8 @@ jobs:
           echo "✅ Deployed to production successfully"
 
   deploy_to_mac:
-    if: ${{ github.event_name == 'workflow_dispatch' && needs.manual-macos.outputs.build_complete == 'true' && needs.push-s3-macos.outputs.build_complete == 'true' && (needs.select-os.outputs.os == 'macos' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.deploy == 'true' }}
-    needs: [select-os]
+    if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'macos' || needs.select-os.outputs.os == 'all') && needs.select-os.outputs.deploy == 'true' }}
+    needs: [select-os, manual-macos, push-s3-mac]
     runs-on: macos-latest
     steps:
       - name: Checkout Code
