@@ -31,13 +31,15 @@ on:
         options:
           - true
           - false
-
-  push:
-    branches:
-      - linux
-
-  release:
-    types: [published]
+          
+      push_to_s3:
+        description: 'Push to S3?'
+        required: true
+        default: 'false'
+        type: choice
+        options:
+          - true
+          - false    
 
 # --- Manual trigger jobs ---
 jobs:
@@ -48,12 +50,19 @@ jobs:
       os: ${{ steps.set.outputs.os }}
       build_type: ${{ steps.set.outputs.build_type }}
       run_tests: ${{ steps.set.outputs.run_tests }}
+      push_to_s3: ${{ steps.set.outputs.push_to_s3 }}
     steps:
       - id: set
         run: |
           echo "os=${{ github.event.inputs.os }}" >> $GITHUB_OUTPUT
           echo "build_type=${{ github.event.inputs.build_type }}" >> $GITHUB_OUTPUT
           echo "run_tests=${{ github.event.inputs.run_tests }}" >> $GITHUB_OUTPUT
+          echo "push_to_s3=${{ github.event.inputs.push_to_s3 }}" >> $GITHUB_OUTPUT
+          echo "Selected OS: ${{ github.event.inputs.os }}"
+          echo "Build type: ${{ github.event.inputs.build_type }}"
+          echo "Run tests: ${{ github.event.inputs.run_tests }}"
+          echo "Push to S3: ${{ github.event.inputs.push_to_s3 }}"
+          echo "Inputs set successfully."
 
   manual-linux:
     if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'linux' || needs.select-os.outputs.os == 'all') }}
@@ -116,30 +125,105 @@ jobs:
           echo "✅ macOS tests passed"
 
 # --- Push to 'linux' branch job ---
-  push-linux:
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/linux' }}
+  push-s3-linux:
+    if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'linux' || needs.select-os.outputs.os == 'all' needs.select-os.outputs.push_to_s3 == 'true') }}
+    needs: [select-os]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Simulate Push to S3 - Linux
+        run: |
+          echo "📦 Pushing to S3..."
+          sleep 1
+          echo "✅ Pushed to S3 successfully"
+      - name: Notify Push (if enabled)
+        if: ${{ needs.select-os.outputs.push_to_s3 == 'true' }}
+        run: |
+          echo "📦 Notifying push..."
+          sleep 1
+          echo "✅ Push notification sent"
+  push-s3-windows:
+    if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'windows' || needs.select-os.outputs.os == 'all' || needs.select-os.outputs.push_to_s3 == 'true') }}
+    needs: [select-os]
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Simulate Push to S3 - Windows
+        run: |
+          echo "📦 Pushing to S3..."
+          timeout /T 1
+          echo "✅ Pushed to S3 successfully"
+      - name: Notify Push (if enabled)
+        if: ${{ needs.select-os.outputs.push_to_s3 == 'true' }}
+        run: |
+          echo "📦 Notifying push..."
+          timeout /T 1
+          echo "✅ Push notification sent"
+  push-s3-mac:
+    if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'macos' || needs.select-os.outputs.os == 'all' || needs.select-os.outputs.push_to_s3 == 'true') }}
+    needs: [select-os]
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Simulate Push to S3 - macOS
+        run: |
+          echo "📦 Pushing to S3..."
+          sleep 1
+          echo "✅ Pushed to S3 successfully"
+      - name: Notify Push (if enabled)
+        if: ${{ needs.select-os.outputs.push_to_s3 == 'true' }}
+        run: |
+          echo "📦 Notifying push..."
+          sleep 1
+          echo "✅ Push notification sent"        
+    
+# --- Release Published Job ---
+  release-linux:
+    if: ${{ github.event_name == 'release' }}
+    needs: [select-os]
     runs-on: ubuntu-latest
     steps:
       - name: Debug Info
         run: |
-          echo "📦 Push triggered"
+          echo "📦 Release triggered"
           echo "Branch: ${{ github.ref }}"
           echo "Event: ${{ github.event_name }}"
       - name: Checkout Code
         uses: actions/checkout@v4
-      - name: Simulate Push Build - Linux
+      - name: Simulate Release Build - Linux
         run: |
-          echo "🚀 Push Build on Linux branch"
+          echo "🚀 Release Build on Linux branch"
           sleep 2
-          echo "✅ Push build complete"
-
-# --- Release Published Job ---
-  release-job:
-    if: ${{ github.event_name == 'release' }}
-    runs-on: ubuntu-latest
-    steps:
-      - name: Show Release Info
+          echo "✅ Release build complete"
+      - name: Notify Release (if enabled)
+        if: ${{ needs.select-os.outputs.push_to_s3 == 'true' }}
         run: |
-          echo "🎉 Release published!"
-          echo "Release Tag: ${{ github.event.release.tag_name }}"
-          echo "Release Name: ${{ github.event.release.name }}"
+          echo "📦 Notifying release..."
+          sleep 1
+          echo "✅ Release notification sent"
+  release-windows:
+    if: ${{ github.event_name == 'release' }}
+    needs: [select-os]
+    runs-on: windows-latest
+    steps:
+      - name: Debug Info
+        run: |
+          echo "📦 Release triggered"
+          echo "Branch: ${{ github.ref }}"
+          echo "Event: ${{ github.event_name }}"
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Simulate Release Build - Windows
+        run: |
+          echo "🚀 Release Build on Windows branch"
+          timeout /T 2
+          echo "✅ Release build complete"
+      - name: Notify Release (if enabled)
+        if: ${{ needs.select-os.outputs.push_to_s3 == 'true' }}
+        run: |
+          echo "📦 Notifying release..."
+          timeout /T 1
+          echo "✅ Release notification sent"          
