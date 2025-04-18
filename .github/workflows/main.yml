@@ -56,8 +56,6 @@ jobs:
           echo "Deploy: ${{ github.event.inputs.deploy }}"
           echo "Inputs set successfully."
   validate:
-    if: ${{ github.event_name == 'workflow_dispatch' }}
-    needs: [select-os]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
