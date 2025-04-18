@@ -1,6 +1,10 @@
 name: Cross-Platform CI/CD
 
 on:
+  pull_request:
+    branches: [ "*" ]
+  push:
+    branches: [ "*" ] 
   workflow_dispatch:
     inputs:
       os:
