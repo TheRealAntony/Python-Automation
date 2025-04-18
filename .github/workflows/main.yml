@@ -51,10 +51,24 @@ jobs:
           echo "deploy=${{ github.event.inputs.deploy }}" >> $GITHUB_OUTPUT
           echo "Deploy: ${{ github.event.inputs.deploy }}"
           echo "Inputs set successfully."
+  validate:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    needs: [select-os]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+      - name: Simulate Linux Build
+        id: build
+        run: |
+          echo "🏗️ Validating the code"
+          sleep 1
+          echo "✅ Validate completed"
+      - run: echo "build_complete=true" >> $GITHUB_OUTPUT
 
   build-linux:
     if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'linux' || needs.select-os.outputs.os == 'all') }}
-    needs: [select-os]
+    needs: [validate, select-os]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
@@ -69,7 +83,7 @@ jobs:
 
   build-windows:
     if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'windows' || needs.select-os.outputs.os == 'all') }}
-    needs: [select-os]
+    needs: [validate, select-os]
     runs-on: windows-latest
     outputs:
       build_complete: ${{ steps.build.outputs.build_complete }}
@@ -85,7 +99,7 @@ jobs:
 
   build-macos:
     if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'macos' || needs.select-os.outputs.os == 'all') }}
-    needs: [select-os]
+    needs: [validate, select-os]
     runs-on: macos-latest
     steps:
       - name: Checkout Code
