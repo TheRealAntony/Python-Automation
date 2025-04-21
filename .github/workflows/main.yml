@@ -1,10 +1,10 @@
 name: Cross-Platform CI/CD
 
 on:
-  pull_request:
-    branches: [ "*" ]
-  push:
-    branches: [ "*" ] 
+  # pull_request:
+  #   branches: [ "*" ]
+  # push:
+  #   branches: [ "*" ] 
   workflow_dispatch:
     inputs:
       os:
@@ -136,6 +136,8 @@ jobs:
           if (!(Get-Command yara -ErrorAction SilentlyContinue)) {
               Write-Host "Installing Yara..."
               choco install yara -y
+              Write-Host "Refreshing environment variables..."
+              $env:Path = [System.Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
               Write-Host "Verifying Yara installation..."
               yara --version
           } else {
