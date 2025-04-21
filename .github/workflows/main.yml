@@ -92,14 +92,10 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-      - name: Simulate Windows Build
+
+      - name: Install Chocolatey
         shell: pwsh
         run: |
-          # Script to Install Development Tools Using Chocolatey
-          # This script installs Git, Node.js, Yara, Make, and Wails 3.
-          # Ensure the script is executed with Administrator privileges.
-          
-          # Check if Chocolatey is installed
           if (!(Get-Command choco -ErrorAction SilentlyContinue)) {
               Write-Host "Chocolatey is not installed. Proceeding with installation..."
               if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
@@ -113,8 +109,10 @@ jobs:
           } else {
               Write-Host "Chocolatey is already installed."
           }
-          
-          # Install Git if not installed
+
+      - name: Install Git
+        shell: pwsh
+        run: |
           if (!(Get-Command git -ErrorAction SilentlyContinue)) {
               Write-Host "Installing Git..."
               choco install git -y --ignore-detected-reboot
@@ -123,8 +121,10 @@ jobs:
           } else {
               Write-Host "Git is already installed."
           }
-          
-          # Install Node.js and npm if not installed
+
+      - name: Install Node.js and npm
+        shell: pwsh
+        run: |
           if (!(Get-Command node -ErrorAction SilentlyContinue)) {
               Write-Host "Installing Node.js and npm..."
               choco install nodejs.install -y --ignore-detected-reboot
@@ -135,8 +135,10 @@ jobs:
           } else {
               Write-Host "Node.js and npm are already installed."
           }
-          
-          # Install Yara if not installed
+
+      - name: Install Yara
+        shell: pwsh
+        run: |
           if (!(Get-Command yara -ErrorAction SilentlyContinue)) {
               Write-Host "Installing Yara..."
               choco install yara -y --ignore-detected-reboot
@@ -152,8 +154,10 @@ jobs:
           } else {
               Write-Host "Yara is already installed."
           }
-          
-          # Install Make if not installed
+
+      - name: Install Make
+        shell: pwsh
+        run: |
           if (!(Get-Command make -ErrorAction SilentlyContinue)) {
               Write-Host "Installing Make..."
               choco install make -y --ignore-detected-reboot
@@ -162,8 +166,10 @@ jobs:
           } else {
               Write-Host "Make is already installed."
           }
-          
-          # Install Go if not installed
+
+      - name: Install Go
+        shell: pwsh
+        run: |
           if (!(Get-Command go -ErrorAction SilentlyContinue)) {
               Write-Host "Installing Go..."
               choco install golang -y --ignore-detected-reboot
@@ -172,14 +178,15 @@ jobs:
           } else {
               Write-Host "Go is already installed."
           }
-          
-          # Install Wails 3 using Go
+
+      - name: Install Wails 3
+        shell: pwsh
+        run: |
           Write-Host "Installing Wails 3 using Go..."
           go install -v github.com/wailsapp/wails/v3/cmd/wails3@latest
           Write-Host "Refreshing environment variables..."
           $env:Path = [System.Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
-          
-          # Add Go binary path to environment variables
+
           Write-Host "Adding Go binary path to environment variables..."
           $goPath = "$($env:USERPROFILE)\go\bin"
           if (-not ($env:Path -split ';' | ForEach-Object { $_.Trim() } | Where-Object { $_ -eq $goPath })) {
@@ -193,16 +200,16 @@ jobs:
           } else {
               Write-Host "Go binary path is already in environment variables."
           }
-          
-          # Verify Wails 3 installation
+
+      - name: Verify Wails 3 Installation
+        shell: pwsh
+        run: |
           Write-Host "Verifying Wails 3 installation..."
           $wails3Path = (Get-Command wails3 -ErrorAction SilentlyContinue).Source
           if ($wails3Path) {
               Write-Host "Wails 3 is installed at: $wails3Path"
               Write-Host "Running 'wails3 doctor'..."
               & $wails3Path doctor
-              # Write-Host "Running 'wails3 build'..."
-              # & $wails3Path build
           } else {
               Write-Host "Wails 3 executable not found in the system path. Please ensure Go binaries are in your PATH."
           }
