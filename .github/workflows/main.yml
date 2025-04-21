@@ -182,11 +182,13 @@ jobs:
       - name: Install Wails 3
         shell: pwsh
         run: |
+          # Install Wails 3 using Go
           Write-Host "Installing Wails 3 using Go..."
           go install -v github.com/wailsapp/wails/v3/cmd/wails3@latest
           Write-Host "Refreshing environment variables..."
           $env:Path = [System.Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
 
+          # Add Go binary path to environment variables
           Write-Host "Adding Go binary path to environment variables..."
           $goPath = "$($env:USERPROFILE)\go\bin"
           if (-not ($env:Path -split ';' | ForEach-Object { $_.Trim() } | Where-Object { $_ -eq $goPath })) {
@@ -201,15 +203,15 @@ jobs:
               Write-Host "Go binary path is already in environment variables."
           }
 
-      - name: Verify Wails 3 Installation
-        shell: pwsh
-        run: |
+          # Verify Wails 3 installation
           Write-Host "Verifying Wails 3 installation..."
           $wails3Path = (Get-Command wails3 -ErrorAction SilentlyContinue).Source
           if ($wails3Path) {
               Write-Host "Wails 3 is installed at: $wails3Path"
               Write-Host "Running 'wails3 doctor'..."
               & $wails3Path doctor
+              # Write-Host "Running 'wails3 build'..."
+              # & $wails3Path build
           } else {
               Write-Host "Wails 3 executable not found in the system path. Please ensure Go binaries are in your PATH."
           }
