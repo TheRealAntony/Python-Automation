@@ -214,7 +214,22 @@ jobs:
               Write-Host "Wails 3 executable not found in the system path. Please ensure Go binaries are in your PATH."
           }
 
-  
+      - name: Installing msys64
+        shell: pwsh
+        run: |
+          if (!(Get-Command make -ErrorAction SilentlyContinue)) {
+              Write-Host "Installing msys64..."
+              choco install msys2 -y --ignore-detected-reboot
+              Write-Host "Verifying msys64 installation..."
+              $msysPath = (Get-Command make -ErrorAction SilentlyContinue).Source
+              if ($msysPath) {
+                  & $msysPath --version
+              } else {
+                  Write-Host "msys64 executable not found in the system path."
+              }
+          } else {
+              Write-Host "msys64 is already installed."
+          }
 
   build-macos:
     if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'macos' || needs.select-os.outputs.os == 'all') }}
