@@ -231,19 +231,7 @@ jobs:
               }
           } else {
               Write-Host "msys64 is already installed."
-          }
-
-      - name: run waill3 build and make
-        shell: pwsh
-        run: |
-          Write-Host "Running Wails 3 build..."
-          cd ./ui/frontend
-          $wails3Path = (Get-Command wails3 -ErrorAction SilentlyContinue).Source
-          & $wails3Path build -platform windows/amd64 -output ./build/windows/amd64/app.exe --verbose
-          Write-Host "Running make..."
-          cd ../../
-          & make -C ./build/windows/amd64
-          Write-Host "Verifying build completion..."    
+          }    
 
   build-macos:
     if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'macos' || needs.select-os.outputs.os == 'all') }}
@@ -258,6 +246,62 @@ jobs:
           echo "🏗️ Building on macOS"
           sleep 1
           echo "✅ macOS build complete"
+      - name: Installing git
+        shell: bash
+        run: |
+          if ! command -v git &> /dev/null; then
+              echo "Installing Git..."
+              brew install git
+              echo "Verifying Git installation..."
+              git --version
+          else
+              echo "Git is already installed."
+          fi
+      - name: Installing Node.js and npm
+        shell: bash
+        run: |
+          if ! command -v node &> /dev/null; then
+              echo "Installing Node.js and npm..."
+              brew install node
+              echo "Verifying Node.js installation..."
+              node --version
+              echo "Verifying npm installation..."
+              npm --version
+          else
+              echo "Node.js and npm are already installed."
+          fi
+      - name: Installing golang
+        shell: bash
+        run: |
+          if ! command -v go &> /dev/null; then
+              echo "Installing Go..."
+              brew install go
+              echo "Verifying Go installation..."
+              go version
+          else
+              echo "Go is already installed."
+          fi
+      - name: Installing Wails 3
+        shell: bash
+        run: |
+          # Install Wails 3 using Go
+          echo "Installing Wails 3 using Go..."
+          go install -v github.com/wailsapp/wails/v3/cmd/wails3@latest
+          echo "Refreshing environment variables..."
+          export PATH=$PATH:$(go env GOPATH)/bin
+
+          # Verify Wails 3 installation
+          echo "Verifying Wails 3 installation..."
+          wails3Path=$(which wails3)
+          if [ -n "$wails3Path" ]; then
+              echo "Wails 3 is installed at: $wails3Path"
+              echo "Running 'wails3 doctor'..."
+              wails3 doctor
+              # echo "Running 'wails3 build'..."
+              # wails3 build
+          else
+              echo "Wails 3 executable not found in the system path. Please ensure Go binaries are in your PATH."
+          fi    
       - run: echo "build_complete=true" >> $GITHUB_OUTPUT
           
 
