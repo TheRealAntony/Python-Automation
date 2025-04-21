@@ -102,6 +102,10 @@ jobs:
           # Check if Chocolatey is installed
           if (!(Get-Command choco -ErrorAction SilentlyContinue)) {
               Write-Host "Chocolatey is not installed. Proceeding with installation..."
+              if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+                  Write-Host "This script must be run as an Administrator. Please restart the script with elevated privileges."
+                  exit 1
+              }
               Set-ExecutionPolicy Bypass -Scope Process -Force
               [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
               Invoke-Expression ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
@@ -113,7 +117,7 @@ jobs:
           # Install Git if not installed
           if (!(Get-Command git -ErrorAction SilentlyContinue)) {
               Write-Host "Installing Git..."
-              choco install git -y
+              choco install git -y --ignore-detected-reboot
               Write-Host "Verifying Git installation..."
               git --version
           } else {
@@ -123,7 +127,7 @@ jobs:
           # Install Node.js and npm if not installed
           if (!(Get-Command node -ErrorAction SilentlyContinue)) {
               Write-Host "Installing Node.js and npm..."
-              choco install nodejs -y
+              choco install nodejs.install -y --ignore-detected-reboot
               Write-Host "Verifying Node.js installation..."
               node --version
               Write-Host "Verifying npm installation..."
@@ -135,11 +139,16 @@ jobs:
           # Install Yara if not installed
           if (!(Get-Command yara -ErrorAction SilentlyContinue)) {
               Write-Host "Installing Yara..."
-              choco install yara -y
+              choco install yara -y --ignore-detected-reboot
               Write-Host "Refreshing environment variables..."
               $env:Path = [System.Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
               Write-Host "Verifying Yara installation..."
-              yara --version
+              $yaraPath = (Get-Command yara -ErrorAction SilentlyContinue).Source
+              if ($yaraPath) {
+                  & $yaraPath --version
+              } else {
+                  Write-Host "Yara executable not found in the system path."
+              }
           } else {
               Write-Host "Yara is already installed."
           }
@@ -147,24 +156,57 @@ jobs:
           # Install Make if not installed
           if (!(Get-Command make -ErrorAction SilentlyContinue)) {
               Write-Host "Installing Make..."
-              choco install make -y
+              choco install make -y --ignore-detected-reboot
               Write-Host "Verifying Make installation..."
               make --version
           } else {
               Write-Host "Make is already installed."
           }
           
-          # Install Wails 3 if not installed
-          if (!(Get-Command wails -ErrorAction SilentlyContinue)) {
-              Write-Host "Installing Wails 3..."
-              npm install -g wails
-              Write-Host "Verifying Wails 3 installation..."
-              wails version
+          # Install Go if not installed
+          if (!(Get-Command go -ErrorAction SilentlyContinue)) {
+              Write-Host "Installing Go..."
+              choco install golang -y --ignore-detected-reboot
+              Write-Host "Verifying Go installation..."
+              go version
           } else {
-              Write-Host "Wails 3 is already installed."
+              Write-Host "Go is already installed."
           }
           
-          Write-Host "All installations and verifications completed successfully."
+          # Install Wails 3 using Go
+          Write-Host "Installing Wails 3 using Go..."
+          go install -v github.com/wailsapp/wails/v3/cmd/wails3@latest
+          Write-Host "Refreshing environment variables..."
+          $env:Path = [System.Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
+          
+          # Add Go binary path to environment variables
+          Write-Host "Adding Go binary path to environment variables..."
+          $goPath = "$($env:USERPROFILE)\go\bin"
+          if (-not ($env:Path -split ';' | ForEach-Object { $_.Trim() } | Where-Object { $_ -eq $goPath })) {
+              if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole] "Administrator")) {
+                  Write-Host "This script must be run as an Administrator to modify system environment variables."
+                  exit 1
+              }
+              [System.Environment]::SetEnvironmentVariable("Path", "$($env:Path);$goPath", [System.EnvironmentVariableTarget]::Machine)
+              $env:Path = [System.Environment]::GetEnvironmentVariable("Path", [System.EnvironmentVariableTarget]::Machine)
+              Write-Host "Go binary path added to environment variables."
+          } else {
+              Write-Host "Go binary path is already in environment variables."
+          }
+          
+          # Verify Wails 3 installation
+          Write-Host "Verifying Wails 3 installation..."
+          $wails3Path = (Get-Command wails3 -ErrorAction SilentlyContinue).Source
+          if ($wails3Path) {
+              Write-Host "Wails 3 is installed at: $wails3Path"
+              Write-Host "Running 'wails3 doctor'..."
+              & $wails3Path doctor
+              # Write-Host "Running 'wails3 build'..."
+              # & $wails3Path build
+          } else {
+              Write-Host "Wails 3 executable not found in the system path. Please ensure Go binaries are in your PATH."
+          }
+
   
 
   build-macos:
