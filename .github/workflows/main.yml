@@ -233,6 +233,18 @@ jobs:
               Write-Host "msys64 is already installed."
           }
 
+      - name: run waill3 build and make
+        shell: pwsh
+        run: |
+          Write-Host "Running Wails 3 build..."
+          cd ./ui/frontend
+          $wails3Path = (Get-Command wails3 -ErrorAction SilentlyContinue).Source
+          & $wails3Path build -platform windows/amd64 -output ./build/windows/amd64/app.exe --verbose
+          Write-Host "Running make..."
+          cd ../../
+          & make -C ./build/windows/amd64
+          Write-Host "Verifying build completion..."    
+
   build-macos:
     if: ${{ github.event_name == 'workflow_dispatch' && (needs.select-os.outputs.os == 'macos' || needs.select-os.outputs.os == 'all') }}
     needs: [validate, select-os]
